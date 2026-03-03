@@ -1,9 +1,16 @@
 import json
+import sys
 from pathlib import Path
 
 # --- Configure your paths ---
-INPUT_PATH = Path("data/input/vbak.sample.json")
-OUTPUT_PATH = Path("out/vbak.enriched.json")
+def get_paths():
+    if len(sys.argv) < 2:
+        print("Usage: python src/enrich_logical_names.py <input_json> [output_json]")
+        sys.exit(1)
+
+    input_path = Path(sys.argv[1])
+    output_path = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("out") / (input_path.stem + ".enriched.json")
+    return input_path, output_path
 
 # --- A starter mapping (extend over time) ---
 # Keys are technical field names, values are descriptive logical names.
@@ -62,20 +69,22 @@ def enrich_vbak_json(data: dict) -> dict:
     return data
 
 def main():
-    if not INPUT_PATH.exists():
-        raise FileNotFoundError(f"Input file not found: {INPUT_PATH}")
+    input_path, output_path = get_paths()
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    if not input_path.exists():
+        raise FileNotFoundError(f"Input file not found: {input_path}")
 
-    with INPUT_PATH.open("r", encoding="utf-8") as f:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with input_path.open("r", encoding="utf-8") as f:
         data = json.load(f)
 
     enriched = enrich_vbak_json(data)
 
-    with OUTPUT_PATH.open("w", encoding="utf-8") as f:
+    with output_path.open("w", encoding="utf-8") as f:
         json.dump(enriched, f, ensure_ascii=False, indent=2)
 
-    print(f"✅ Wrote enriched JSON to: {OUTPUT_PATH}")
+    print(f"✅ Wrote enriched JSON to: {output_path}")
 
 if __name__ == "__main__":
     main()
