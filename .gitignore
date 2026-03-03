@@ -1,0 +1,10 @@
+
+# Generated output
+out/
+
+# Python noise (for later)
+__pycache__/
+.venv/
+
+# OS noise
+.DS_Store
