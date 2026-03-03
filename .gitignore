@@ -8,3 +8,7 @@ __pycache__/
 
 # OS noise
 .DS_Store
+
+
+# input files
+input/
