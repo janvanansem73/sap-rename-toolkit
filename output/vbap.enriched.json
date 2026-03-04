@@ -1,0 +1,60 @@
+{
+  "nodes": [
+    {
+      "id": "vbap",
+      "type": "entity",
+      "data": {
+        "name": "VBAP",
+        "logical_name": "Sales Document Item",
+        "attributes": [
+          {
+            "name": "MANDT",
+            "data_type": "VARCHAR(3)",
+            "logical_name": "Unmapped (MANDT)"
+          },
+          {
+            "name": "VBELN",
+            "data_type": "VARCHAR(10)",
+            "logical_name": "Sales Document Number"
+          },
+          {
+            "name": "POSNR",
+            "data_type": "VARCHAR(6)",
+            "logical_name": "Sales Document Item"
+          },
+          {
+            "name": "MATNR",
+            "data_type": "VARCHAR(18)",
+            "logical_name": "Material Number"
+          },
+          {
+            "name": "ARKTX",
+            "data_type": "VARCHAR(40)",
+            "logical_name": "Unmapped (ARKTX)"
+          },
+          {
+            "name": "KWMENG",
+            "data_type": "DECIMAL(15,3)",
+            "logical_name": "Order Quantity"
+          },
+          {
+            "name": "VRKME",
+            "data_type": "VARCHAR(3)",
+            "logical_name": "Sales Unit"
+          },
+          {
+            "name": "NETWR",
+            "data_type": "DECIMAL(15,2)",
+            "logical_name": "Net Value"
+          },
+          {
+            "name": "WAERK",
+            "data_type": "VARCHAR(5)",
+            "logical_name": "Unmapped (WAERK)"
+          }
+        ]
+      }
+    }
+  ],
+  "edges": []
+}

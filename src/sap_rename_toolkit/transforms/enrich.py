@@ -78,3 +78,25 @@ def enrich_file(input_path: Path, output_path: Path, mappings_dir: Path) -> None
 
     with output_path.open("w", encoding="utf-8") as f:
         json.dump(enriched, f, ensure_ascii=False, indent=2)
+
+if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+
+    if len(sys.argv) < 2:
+        raise SystemExit(
+            "Usage: python -m sap_rename_toolkit.transforms.enrich <input_json>"
+        )
+
+    input_path = Path(sys.argv[1])
+
+    # ✅ deterministic output location
+    output_path = Path("output") / f"{input_path.stem}.enriched.json"
+
+    # ✅ mappings location (adjust if needed)
+    mappings_dir = Path("mappings")
+
+    print(f"Input : {input_path.resolve()}")
+    print(f"Output: {output_path.resolve()}")
+
+    enrich_file(input_path, output_path, mappings_dir)
