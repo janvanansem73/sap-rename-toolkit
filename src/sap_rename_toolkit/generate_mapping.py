@@ -5,7 +5,7 @@ from pathlib import Path
 from sap_rename_toolkit.snowflake_client import SnowflakeClient
 
 
-def generate_mapping(table_name: str, output_dir: Path = Path("mappings")) -> Path:
+def generate_mapping(table_name: str, output_dir: Path = Path("mappings/tables")) -> Path:
     table = table_name.upper().strip()
 
     sf = SnowflakeClient()
