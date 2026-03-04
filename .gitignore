@@ -12,3 +12,5 @@ __pycache__/
 
 # input files
 input/
+
+.env
