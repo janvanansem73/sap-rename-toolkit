@@ -1,4 +1,4 @@
-from sap_json_toolkit.snowflake_client import SnowflakeClient
+from sap_rename_toolkit.snowflake_client import SnowflakeClient
 
 
 def main():
