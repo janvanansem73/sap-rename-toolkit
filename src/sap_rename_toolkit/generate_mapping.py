@@ -5,7 +5,7 @@ from pathlib import Path
 from sap_rename_toolkit.snowflake_client import SnowflakeClient
 
 
-def generate_mapping(table_name: str, output_dir: Path = Path("output")) -> Path:
+def generate_mapping(table_name: str, output_dir: Path = Path("mappings")) -> Path:
     table = table_name.upper().strip()
 
     sf = SnowflakeClient()
@@ -13,7 +13,7 @@ def generate_mapping(table_name: str, output_dir: Path = Path("output")) -> Path
     # 1) Get table logical name
     sql_table = """
     SELECT LOGICAL_TABLE_NAME
-    FROM VW_SAP_LOGICAL_FIELD_NAME
+    FROM SAP_CORE.FIVEDP_SAPHANADB.VW_SAP_LOGICAL_TABLE_NAME
     WHERE TABLE_NAME = %(table)s
     """
     cols, rows = sf.query(sql_table, {"table": table})
@@ -24,7 +24,7 @@ def generate_mapping(table_name: str, output_dir: Path = Path("output")) -> Path
     # 2) Get field mappings in column order
     sql_fields = """
     SELECT COLUMN_NAME, LOGICAL_FIELD_NAME
-    FROM VW_SAP_LOGICAL_FIELD_NAME
+    FROM SAP_CORE.FIVEDP_SAPHANADB.VW_SAP_LOGICAL_FIELD_NAME
     WHERE TABLE_NAME = %(table)s
     ORDER BY COLUMN_POSITION
     """
