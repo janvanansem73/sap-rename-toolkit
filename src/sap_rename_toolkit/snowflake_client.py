@@ -1,4 +1,5 @@
 import os
+import base64
 from pathlib import Path
 
 import snowflake.connector
@@ -6,6 +7,7 @@ from dotenv import load_dotenv
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.serialization import load_der_private_key
 
 
 class SnowflakeClient:
@@ -15,7 +17,8 @@ class SnowflakeClient:
     """
 
     def __init__(self):
-        load_dotenv()
+        # override=True ensures .env values win over any environment variables you might have set earlier
+        load_dotenv(override=True)
 
         self.account = os.getenv("SNOWFLAKE_ACCOUNT")
         self.user = os.getenv("SNOWFLAKE_USER")
@@ -44,6 +47,13 @@ class SnowflakeClient:
             raise RuntimeError(f"Missing required .env settings: {', '.join(missing)}")
 
     def _load_private_key_der(self) -> bytes:
+        """
+        Returns DER-encoded PKCS8 bytes for Snowflake connector.
+        Supports:
+          1) PEM (with BEGIN/END lines)
+          2) DER (binary PKCS8)
+          3) Base64 DER text (starts with MIIF..., no BEGIN/END)
+        """
         key_file = Path(self.private_key_path)
 
         if not key_file.exists():
@@ -53,26 +63,60 @@ class SnowflakeClient:
         if self.private_key_passphrase:
             password = self.private_key_passphrase.encode("utf-8")
 
-        with key_file.open("rb") as f:
-            pem_data = f.read()
+        raw = key_file.read_bytes()
 
-        p_key = serialization.load_pem_private_key(
-            pem_data,
-            password=password,
-            backend=default_backend()
-        )
+        # 1) Try PEM
+        try:
+            p_key = serialization.load_pem_private_key(
+                raw,
+                password=password,
+                backend=default_backend(),
+            )
+            return p_key.private_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        except Exception:
+            pass
 
-        # Snowflake connector expects DER-encoded PKCS8 bytes
-        return p_key.private_bytes(
-            encoding=serialization.Encoding.DER,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
-        )
+        # 2) Try DER (binary PKCS8)
+        try:
+            p_key = load_der_private_key(
+                raw,
+                password=password,
+                backend=default_backend(),
+            )
+            return p_key.private_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        except Exception:
+            pass
+
+        # 3) Try base64 text (MIIF... style)
+        try:
+            b64 = b"".join(raw.split())
+            der = base64.b64decode(b64)
+            p_key = load_der_private_key(
+                der,
+                password=password,
+                backend=default_backend(),
+            )
+            return p_key.private_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        except Exception as e:
+            raise ValueError(
+                "Could not load private key. Ensure it is PEM (with BEGIN/END lines) "
+                "or DER PKCS8, and the passphrase (if encrypted) is correct."
+            ) from e
 
     def connect(self):
         private_key_der = self._load_private_key_der()
-
-        # Snowflake connector supports connecting and executing SQL via cursor. [3](https://teams.microsoft.com/l/meeting/details?eventId=AAMkAGI3NjMyMWZmLTNiMTMtNDhjNy04NjQ1LTM0MzRiZDM0NGIyNwFRAAgI3mzuU-iAAEYAAAAAxC_7SY5mxEas8FmKoNO2MAcAIiGuSLnixk_aNsPcOCS0WgAAAAABDQAAIiGuSLnixk_aNsPcOCS0WgAFpFHC0wAAEA%3d%3d)
         return snowflake.connector.connect(
             user=self.user,
             account=self.account,
@@ -85,7 +129,7 @@ class SnowflakeClient:
 
     def query(self, sql: str, params: dict | None = None):
         """
-        Returns (columns, rows)
+        Execute a SQL query and return (columns, rows).
         """
         ctx = self.connect()
         try:
