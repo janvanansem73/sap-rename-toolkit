@@ -3,10 +3,14 @@ from collections import OrderedDict
 from pathlib import Path
 
 from sap_rename_toolkit.snowflake_client import SnowflakeClient
+from sap_rename_toolkit.config import MAPPINGS_DIR, ensure_dirs
 
 
-def generate_mapping(table_name: str, output_dir: Path = Path("mappings/tables")) -> Path:
+def generate_mapping(table_name: str, output_dir: Path = MAPPINGS_DIR) -> Path:
+    ensure_dirs()
     table = table_name.upper().strip()
+    out_path = output_dir / f"{table}.json"
+
 
     sf = SnowflakeClient()
 
